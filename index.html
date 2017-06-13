@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Grid editor</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/node_modules/font-awesome/css/font-awesome.min.css">
+    <style>
+        div[class^="col"], div.row {
+            background-color: #f1f1f1;
+            position: relative;
+            transition: all 0.3s;
+            padding-top:30px;
+        }
+        div.row {
+            padding:5px;
+            padding-top: 30px;
+        }
+        div[class^="col"] label {
+            position: absolute;
+            left:0px;
+            top:0px;
+            right: 0px;
+            text-align: center;
+        }
+        .removeElement[data-action= '0001']{
+            display: none;
+        }
+        .elementContent {
+            background-color: rgba(0,0,0, 0.05);
+            min-height: 50px;
+            width: 100%;
+            padding: 10px 10px 1px 10px;
+            position: relative;
+        }
+        .elementContent:hover .controls{
+            opacity: 1 !important;
+        }
+        div[class^="col"]:hover, div.row:hover {
+
+        }
+        div[class^="col"]:hover > .controls, div.row:hover > .controls {
+            opacity:1 !important;
+        }
+        .box {
+            position: relative;
+            min-height: 50px;
+            margin-bottom:10px;
+            background-color: #00b3ee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .fa {
+            font-size:10px;
+        }
+        .controls .btn {
+            padding: 0px 6px;
+        }
+
+        #gridEditor .controls {
+            position: absolute;
+            z-index: 1000;
+            top:0px;
+            right:0px;
+            opacity:0;
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="gridEditor">
+
+    </div>
+    <pre>
+        <p>asd</p>
+    </pre>
+    <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="grid-type" class="form-control-label">Dodaj element:</label>
+                            <select name="grid-type" id="grid-type">
+                                <option value="0">Wiersz</option>
+                                <option value="1">1/12</option>
+                                <option value="2">2/12</option>
+                                <option value="3">3/12</option>
+                                <option value="4">4/12</option>
+                                <option value="5">5/12</option>
+                                <option value="6">6/12</option>
+                                <option value="7">7/12</option>
+                                <option value="8">8/12</option>
+                                <option value="9">9/12</option>
+                                <option value="10">10/12</option>
+                                <option value="11">11/12</option>
+                                <option value="12">12/12</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Zamknij</button>
+                    <button id="addElementBox" type="button" class="btn btn-primary" data-dismiss="modal">Dodaj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="edit-name" class="form-control-label">Nazwa:</label>
+                            <input name="name" type="text" id="edit-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-class" class="form-control-label">Dodatkowe klasy:</label>
+                            <input name="class" type="text" id="edit-class">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-grid" class="form-control-label">Typ/Rozmiar:</label>
+                            <select name="edit-grid" id="edit-grid">
+                                <option value="0">Wiersz</option>
+                                <option value="1">1/12</option>
+                                <option value="2">2/12</option>
+                                <option value="3">3/12</option>
+                                <option value="4">4/12</option>
+                                <option value="5">5/12</option>
+                                <option value="6">6/12</option>
+                                <option value="7">7/12</option>
+                                <option value="8">8/12</option>
+                                <option value="9">9/12</option>
+                                <option value="10">10/12</option>
+                                <option value="11">11/12</option>
+                                <option value="12">12/12</option>
+                            </select>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Zamknij</button>
+                    <button id="editElementBox" type="button" class="btn btn-primary" data-dismiss="modal">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+   <button onclick="dragMe()">Run</button>
+</div>
+<script src="/src/sampleData.js"></script>
+<script src="/node_modules/jquery/dist/jquery.min.js"></script>
+<script src="/node_modules/tether/dist/js/tether.min.js"></script>
+<script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="/node_modules/sortablejs/Sortable.min.js"></script>
+<script src="/src/Editor.js"></script>
+<script>
+    dragMe = function() {
+        var arr = document.getElementsByClassName('elementContent');
+        [].forEach.call(arr, function (el) {
+            var sort = Sortable.create(el, {
+                animation: 150,
+                draggable: '.box'
+            });
+        });
+    }
+</script>
+</body>
+</html>

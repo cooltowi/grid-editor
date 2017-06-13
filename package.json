@@ -1,0 +1,21 @@
+{
+  "name": "grid_constructor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/jquery": "^2.0.45",
+    "bootstrap": "v4.0.0-alpha.6",
+    "tether": "latest",
+    "jquery": "^3.2.1",
+    "font-awesome": "^4.7.0",
+    "sortablejs": "latest",
+    "gulp": "latest",
+    "gulp-webserver": "latest"
+  }
+}
