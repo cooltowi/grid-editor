@@ -165,7 +165,6 @@
             </div>
         </div>
     </div>
-   <button onclick="dragMe()">Run</button>
 </div>
 <script src="/src/sampleData.js"></script>
 <script src="/node_modules/jquery/dist/jquery.min.js"></script>
@@ -173,16 +172,5 @@
 <script src="/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="/node_modules/sortablejs/Sortable.min.js"></script>
 <script src="/src/Editor.js"></script>
-<script>
-    dragMe = function() {
-        var arr = document.getElementsByClassName('elementContent');
-        [].forEach.call(arr, function (el) {
-            var sort = Sortable.create(el, {
-                animation: 150,
-                draggable: '.box'
-            });
-        });
-    }
-</script>
 </body>
 </html>

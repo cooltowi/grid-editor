@@ -15,6 +15,8 @@ class GridEditor {
         this.displayJson(this.data);
 
         this.$element.append(this.output);
+        this.runDrag();
+        this.setElements();
     }
 
     public bindEvents() {
@@ -32,7 +34,6 @@ class GridEditor {
 
         $(document).on('click', '.addBoxElement', (e:Event) => {
             let button = $(e.currentTarget);
-            console.log(button.data('action'));
             this.addElement(button.data('action'), 13, 'new box');
         });
 
@@ -62,6 +63,12 @@ class GridEditor {
         this.renderGrid(this.data.content);
     }
 
+    public render(data:{}) {
+        this.$element.html('').append(this.renderGrid(data.content));
+        this.displayJson(data);
+        this.runDrag();
+    }
+
     public editElement(elementId:number, grid:number, name:string, elementClass:string) {
         $.each(this.data.content, (index, data) => {
             if (data != null && data.id == elementId) {
@@ -70,8 +77,28 @@ class GridEditor {
                 data.additionalClass = elementClass;
             }
         });
-        this.$element.html('').append(this.renderGrid(this.data.content));
-        this.displayJson(this.data);
+        this.render(this.data);
+    }
+
+    public setParent(element:number, parent:number) {
+        $.each(this.data.content, (index, data) => {
+            if (data != null && data.id == element) {
+                data.parentId = parent;
+            }
+        });
+        this.render(this.data);
+    }
+
+    public setOrder(element:number, order:number) {
+        order += 1;
+        $.each(this.data.content, (index, data) => {
+            if (data != null && data.id == element) {
+                data.order = order;
+                console.log(data.id + ':' order);
+            }
+            //console.log(order);
+        });
+        this.render(this.data);
     }
 
     public addElement(parentId:number, type:number, name:string) {
@@ -80,12 +107,11 @@ class GridEditor {
             grid: type,
             parentId: parentId,
             name: name,
+            order: 0,
             additionalClass: '',
             content: '',
         });
-        this.$element.html('').append(this.renderGrid(this.data.content));
-        this.runDrag();
-        this.displayJson(this.data);
+        this.render(this.data);
     }
 
     public removeChild(parentId:number) {
@@ -137,7 +163,7 @@ class GridEditor {
                     elementClass = 'row';
                 } else {
                     elementClass = 'col-md-' + data.grid;
-                    gridContent = $('<div>').addClass('elementContent el_' + data.id).append(this.renderBoxControls(data));
+                    gridContent = $('<div>').addClass('elementContent el_' + data.id).attr('data-el', data.id).append(this.renderBoxControls(data));
                 }
                 if (typeof data.additionalClass != 'undefined') {
                     additionalClass = data.additionalClass;
@@ -151,7 +177,6 @@ class GridEditor {
         });
         this.output = outputList;
         this.output = this.renderElements(data, this.output);
-        console.log(this.output);
         return this.output;
     }
 
@@ -163,7 +188,7 @@ class GridEditor {
                     additionalClass = data.additionalClass;
                 }
                 if (data.parentId != '') {
-                    gridCore.find('.el_' + data.parentId).append($('<div>').addClass('box vc_box_id_' + data.id + ' ' + additionalClass).attr('data-order', data.order).html('<span>' + data.name + '</span>'));
+                    gridCore.find('.el_' + data.parentId).append($('<div>').addClass('box vc_box_id_' + data.id + ' ' + additionalClass).attr('data-order', data.order).attr('data-id', data.id).html('<span>' + data.name + '</span>'));
                 }
             }
         });
@@ -194,16 +219,63 @@ class GridEditor {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    protected sortables:[] = [];
+
     public runDrag() {
         var arr = document.getElementsByClassName('elementContent');
+        var self = this;
         [].forEach.call(arr, function (el) {
-            var sort = Sortable.create(el, {
+            let sortableElement = Sortable.create(el, {
                 ghostClass: '.elementContent',
                 group: 'box',
                 animation: 150,
-                draggable: '.box'
+                draggable: '.box',
+                store : {
+                    set : function (sortable) {
+                        var order = sortable.toArray();
+                        //console.log('set');
+                        self.updateBoxSort(order);
+                    },
+                    get : function (sortable) {
+                        return [];
+                    }
+                },
+
+                onUpdate: function (evt:Event) {
+                    let elementId = $(evt.item).data('id');
+                    //self.setOrder(elementId, evt.newIndex + 1);
+                },
+
+                onAdd: function (evt:Event) {
+                    let newParentId = $(evt.to).data('el');
+                    let elementId = $(evt.item).data('id');
+                    self.setParent(elementId, newParentId);
+                    self.setOrder(elementId, evt.newIndex);
+                    console.log(evt);
+                },
+
+                onChoose: function(evt:Event) {
+                    console.log(evt);
+                    console.log('choose');
+                    //let elementId = $(evt.item).data('id');
+                    //self.setOrder(elementId, evt.oldIndex + 1);
+                    //self.displayJson(self.data);
+                },
             });
+            self.sortables.push(sortableElement);
         });
+    }
+
+    public setElements() {
+
+    }
+
+    public updateBoxSort(data:{}) {
+        //console.log(data);
+        $.each(data, (index, data) => {
+            this.setOrder(data, index);
+        });
+        this.render(this.data);
     }
 
     public getElements(value) {
@@ -221,10 +293,8 @@ class GridEditor {
             return a.order - b.order;
         });
         let dataOutput = elements.concat(boxes);
-        console.log(dataOutput);
         return dataOutput;
     }
-
 
 }
 

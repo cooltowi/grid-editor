@@ -1,11 +1,14 @@
 var GridEditor = (function () {
     function GridEditor(element, data) {
+        this.sortables = [];
         this.$element = $(element);
         this.data = data;
         this.renderGrid(this.data.content);
         this.bindEvents();
         this.displayJson(this.data);
         this.$element.append(this.output);
+        this.runDrag();
+        this.setElements();
     }
     GridEditor.prototype.bindEvents = function () {
         var _this = this;
@@ -20,7 +23,6 @@ var GridEditor = (function () {
         });
         $(document).on('click', '.addBoxElement', function (e) {
             var button = $(e.currentTarget);
-            console.log(button.data('action'));
             _this.addElement(button.data('action'), 13, 'new box');
         });
         $('#addModal').on('show.bs.modal', function (e) {
@@ -44,6 +46,11 @@ var GridEditor = (function () {
         });
         this.renderGrid(this.data.content);
     };
+    GridEditor.prototype.render = function (data) {
+        this.$element.html('').append(this.renderGrid(data.content));
+        this.displayJson(data);
+        this.runDrag();
+    };
     GridEditor.prototype.editElement = function (elementId, grid, name, elementClass) {
         $.each(this.data.content, function (index, data) {
             if (data != null && data.id == elementId) {
@@ -52,8 +59,26 @@ var GridEditor = (function () {
                 data.additionalClass = elementClass;
             }
         });
-        this.$element.html('').append(this.renderGrid(this.data.content));
-        this.displayJson(this.data);
+        this.render(this.data);
+    };
+    GridEditor.prototype.setParent = function (element, parent) {
+        $.each(this.data.content, function (index, data) {
+            if (data != null && data.id == element) {
+                data.parentId = parent;
+            }
+        });
+        this.render(this.data);
+    };
+    GridEditor.prototype.setOrder = function (element, order) {
+        order += 1;
+        $.each(this.data.content, function (index, data) {
+            if (data != null && data.id == element) {
+                data.order = order;
+                console.log(data.id + ':', order);
+            }
+            //console.log(order);
+        });
+        this.render(this.data);
     };
     GridEditor.prototype.addElement = function (parentId, type, name) {
         this.data.content.push({
@@ -61,12 +86,11 @@ var GridEditor = (function () {
             grid: type,
             parentId: parentId,
             name: name,
+            order: 0,
             additionalClass: '',
             content: ''
         });
-        this.$element.html('').append(this.renderGrid(this.data.content));
-        this.runDrag();
-        this.displayJson(this.data);
+        this.render(this.data);
     };
     GridEditor.prototype.removeChild = function (parentId) {
         var _this = this;
@@ -109,7 +133,7 @@ var GridEditor = (function () {
                 }
                 else {
                     elementClass = 'col-md-' + data.grid;
-                    gridContent = $('<div>').addClass('elementContent el_' + data.id).append(_this.renderBoxControls(data));
+                    gridContent = $('<div>').addClass('elementContent el_' + data.id).attr('data-el', data.id).append(_this.renderBoxControls(data));
                 }
                 if (typeof data.additionalClass != 'undefined') {
                     additionalClass = data.additionalClass;
@@ -124,7 +148,6 @@ var GridEditor = (function () {
         });
         this.output = outputList;
         this.output = this.renderElements(data, this.output);
-        console.log(this.output);
         return this.output;
     };
     GridEditor.prototype.renderElements = function (data, gridCore) {
@@ -135,7 +158,7 @@ var GridEditor = (function () {
                     additionalClass = data.additionalClass;
                 }
                 if (data.parentId != '') {
-                    gridCore.find('.el_' + data.parentId).append($('<div>').addClass('box vc_box_id_' + data.id + ' ' + additionalClass).attr('data-order', data.order).html('<span>' + data.name + '</span>'));
+                    gridCore.find('.el_' + data.parentId).append($('<div>').addClass('box vc_box_id_' + data.id + ' ' + additionalClass).attr('data-order', data.order).attr('data-id', data.id).html('<span>' + data.name + '</span>'));
                 }
             }
         });
@@ -157,14 +180,54 @@ var GridEditor = (function () {
     };
     GridEditor.prototype.runDrag = function () {
         var arr = document.getElementsByClassName('elementContent');
+        var self = this;
         [].forEach.call(arr, function (el) {
-            var sort = Sortable.create(el, {
+            var sortableElement = Sortable.create(el, {
                 ghostClass: '.elementContent',
                 group: 'box',
                 animation: 150,
-                draggable: '.box'
+                draggable: '.box',
+                store: {
+                    set: function (sortable) {
+                        var order = sortable.toArray();
+                        //console.log('set');
+                        self.updateBoxSort(order);
+                    },
+                    get: function (sortable) {
+                        return [];
+                    }
+                },
+                onUpdate: function (evt) {
+                    var elementId = $(evt.item).data('id');
+                    //self.setOrder(elementId, evt.newIndex + 1);
+                },
+                onAdd: function (evt) {
+                    var newParentId = $(evt.to).data('el');
+                    var elementId = $(evt.item).data('id');
+                    self.setParent(elementId, newParentId);
+                    self.setOrder(elementId, evt.newIndex);
+                    console.log(evt);
+                },
+                onChoose: function (evt) {
+                    console.log(evt);
+                    console.log('choose');
+                    //let elementId = $(evt.item).data('id');
+                    //self.setOrder(elementId, evt.oldIndex + 1);
+                    //self.displayJson(self.data);
+                }
             });
+            self.sortables.push(sortableElement);
         });
+    };
+    GridEditor.prototype.setElements = function () {
+    };
+    GridEditor.prototype.updateBoxSort = function (data) {
+        var _this = this;
+        //console.log(data);
+        $.each(data, function (index, data) {
+            _this.setOrder(data, index);
+        });
+        this.render(this.data);
     };
     GridEditor.prototype.getElements = function (value) {
         return value.grid != 13;
@@ -179,7 +242,6 @@ var GridEditor = (function () {
             return a.order - b.order;
         });
         var dataOutput = elements.concat(boxes);
-        console.log(dataOutput);
         return dataOutput;
     };
     return GridEditor;
