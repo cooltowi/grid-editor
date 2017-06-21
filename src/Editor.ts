@@ -4,6 +4,8 @@ class GridEditor {
 
     protected output:JQuery;
 
+    protected link = 'http://localhost/';
+
     public constructor(element:string, data:{}) {
 
         this.$element = $(element);
@@ -23,6 +25,7 @@ class GridEditor {
         let name = $('#editModal').find('#edit-name');
         let grid = $('#editModal').find('#edit-grid');
         let elementClass = $('#editModal').find('#edit-class');
+        self = this;
 
         $(document).on('click', '.removeElement', (e:Event) => {
             let $el = $(e.currentTarget);
@@ -32,10 +35,14 @@ class GridEditor {
             this.$element.html('').append(this.output);
         });
 
-        $(document).on('click', '.addBoxElement', (e:Event) => {
-            let button = $(e.currentTarget);
-            this.addElement(button.data('action'), 13, 'new box');
+        $(document).on('click', '#addElementBoxSecond', (e:Event) => {
+            console.log('click');
         });
+
+        // $(document).on('click', '.addBoxElement', (e:Event) => {
+        //     let button = $(e.currentTarget);
+        //     this.addElement(button.data('action'), 13, 'new box');
+        // });
 
         $('#addModal').on('show.bs.modal', (e:Event) => {
             let button = $(e.relatedTarget);
@@ -49,6 +56,21 @@ class GridEditor {
             name.val(button.data('name'));
             grid.val(button.data('grid'));
             elementClass.val(button.data('class'));
+        });
+
+        $('#addModalBox').on('show.bs.modal', (e:Event) => {
+            $.get( this.link+'/module/list', function (data) {
+                if(data.success) {
+                    self.showBoxes(data);
+                }
+            });
+        });
+
+        $('#addModalBox').on('hide.bs.modal', (e:Event) => {
+            $(e.target).find('#boxContent').fadeOut();
+            $(e.target).find('.loader-box').fadeIn();
+            $(e.target).find('#addElementBoxSecond').prop("disabled", true);
+            $(e.target).find('#box-type').html(' ');
         });
 
         $('#addElementBox').on('click', () => {
@@ -94,9 +116,7 @@ class GridEditor {
         $.each(this.data.content, (index, data) => {
             if (data != null && data.id == element) {
                 data.order = order;
-                console.log(data.id + ':' order);
             }
-            //console.log(order);
         });
         this.render(this.data);
     }
@@ -112,6 +132,29 @@ class GridEditor {
             content: '',
         });
         this.render(this.data);
+    }
+
+    public addBoxElement(parentId:number, type:number, name:string) {
+        this.data.content.push({
+            id: this.getRandomInt(100000, 999999),
+            grid: type,
+            parentId: parentId,
+            name: name,
+            order: 0,
+            additionalClass: '',
+            content: '',
+        });
+        this.render(this.data);
+    }
+
+    public showBoxes(data:{}) {
+        console.log(data);
+        $.each(data.pageModules, (index, data) => {
+            $('#box-type').append('<option value='+data.id+'>'+data.name+'</option>');
+        };
+        $('#addElementBoxSecond').prop('disabled', false );
+        $('.loader-box').fadeOut();
+        $('#boxContent').fadeIn();
     }
 
     public removeChild(parentId:number) {
@@ -211,7 +254,7 @@ class GridEditor {
 
     public renderBoxControls(data:{}):JQuery {
         return $('<div>').addClass('controls btn-group').append(
-            $('<button>').addClass('btn btn-xs btn-primary addBoxElement').attr('data-action', data.id).html('<i class="fa fa-plus" aria-hidden="true"></i>')
+            $('<button>').addClass('btn btn-xs btn-primary addBoxElement').attr('data-action', data.id).attr('data-target', '#addModalBox').attr('data-toggle', 'modal').html('<i class="fa fa-plus" aria-hidden="true"></i>')
         );
     }
 

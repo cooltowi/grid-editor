@@ -1,5 +1,6 @@
 var GridEditor = (function () {
     function GridEditor(element, data) {
+        this.link = 'http://localhost/';
         this.sortables = [];
         this.$element = $(element);
         this.data = data;
@@ -15,16 +16,20 @@ var GridEditor = (function () {
         var name = $('#editModal').find('#edit-name');
         var grid = $('#editModal').find('#edit-grid');
         var elementClass = $('#editModal').find('#edit-class');
+        self = this;
         $(document).on('click', '.removeElement', function (e) {
             var $el = $(e.currentTarget);
             _this.removeElement($el);
             _this.renderGrid(_this.data.content);
             _this.$element.html('').append(_this.output);
         });
-        $(document).on('click', '.addBoxElement', function (e) {
-            var button = $(e.currentTarget);
-            _this.addElement(button.data('action'), 13, 'new box');
+        $(document).on('click', '#addElementBoxSecond', function (e) {
+            console.log('click');
         });
+        // $(document).on('click', '.addBoxElement', (e:Event) => {
+        //     let button = $(e.currentTarget);
+        //     this.addElement(button.data('action'), 13, 'new box');
+        // });
         $('#addModal').on('show.bs.modal', function (e) {
             var button = $(e.relatedTarget);
             var recipient = button.data('action');
@@ -36,6 +41,19 @@ var GridEditor = (function () {
             name.val(button.data('name'));
             grid.val(button.data('grid'));
             elementClass.val(button.data('class'));
+        });
+        $('#addModalBox').on('show.bs.modal', function (e) {
+            $.get(_this.link + '/module/list', function (data) {
+                if (data.success) {
+                    self.showBoxes(data);
+                }
+            });
+        });
+        $('#addModalBox').on('hide.bs.modal', function (e) {
+            $(e.target).find('#boxContent').fadeOut();
+            $(e.target).find('.loader-box').fadeIn();
+            $(e.target).find('#addElementBoxSecond').prop("disabled", true);
+            $(e.target).find('#box-type').html(' ');
         });
         $('#addElementBox').on('click', function () {
             var type = $('#grid-type').val();
@@ -74,9 +92,7 @@ var GridEditor = (function () {
         $.each(this.data.content, function (index, data) {
             if (data != null && data.id == element) {
                 data.order = order;
-                console.log(data.id + ':', order);
             }
-            //console.log(order);
         });
         this.render(this.data);
     };
@@ -91,6 +107,27 @@ var GridEditor = (function () {
             content: ''
         });
         this.render(this.data);
+    };
+    GridEditor.prototype.addBoxElement = function (parentId, type, name) {
+        this.data.content.push({
+            id: this.getRandomInt(100000, 999999),
+            grid: type,
+            parentId: parentId,
+            name: name,
+            order: 0,
+            additionalClass: '',
+            content: ''
+        });
+        this.render(this.data);
+    };
+    GridEditor.prototype.showBoxes = function (data) {
+        console.log(data);
+        $.each(data.pageModules, function (index, data) {
+            $('#box-type').append('<option value=' + data.id + '>' + data.name + '</option>');
+        });
+        $('#addElementBoxSecond').prop('disabled', false);
+        $('.loader-box').fadeOut();
+        $('#boxContent').fadeIn();
     };
     GridEditor.prototype.removeChild = function (parentId) {
         var _this = this;
@@ -173,7 +210,7 @@ var GridEditor = (function () {
         return $('<div>').addClass('controls btn-group').append($('<button>').addClass('btn btn-xs btn-primary addElement').attr('data-action', data.id).attr('data-target', '#addModal').attr('data-toggle', 'modal').html('<i class="fa fa-plus" aria-hidden="true"></i>'), $('<button>').addClass('btn btn-xs btn-primary editElement').attr('data-action', data.id).attr('data-grid', data.grid).attr('data-name', data.name).attr('data-class', data.additionalClass).attr('data-content', data.content).attr('data-target', '#editModal').attr('data-toggle', 'modal').html('<i class="fa fa-edit" aria-hidden="true"></i>'), $('<button>').addClass('btn btn-xs btn-danger removeElement').attr('data-action', data.id).html('<i class="fa fa-trash" aria-hidden="true"></i>'));
     };
     GridEditor.prototype.renderBoxControls = function (data) {
-        return $('<div>').addClass('controls btn-group').append($('<button>').addClass('btn btn-xs btn-primary addBoxElement').attr('data-action', data.id).html('<i class="fa fa-plus" aria-hidden="true"></i>'));
+        return $('<div>').addClass('controls btn-group').append($('<button>').addClass('btn btn-xs btn-primary addBoxElement').attr('data-action', data.id).attr('data-target', '#addModalBox').attr('data-toggle', 'modal').html('<i class="fa fa-plus" aria-hidden="true"></i>'));
     };
     GridEditor.prototype.getRandomInt = function (min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
